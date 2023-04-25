@@ -138,8 +138,16 @@ function search_inv(){
                         done
 		 elif grep -Eiq "$i" inventory; then
                         printf "You have this in your inventory.\n"
-		
-		 else
+			if grep -Eilq "$i" recipes/*; then
+		printf "You can make the following recipes with this ingredient:\n"
+						IFS=$'\n' titles=$(grep -Eil "$i" recipes/* | sed -r "s/recipes\/([0-9]+)/\1/")
+						for t in $titles; do 
+							grep -Ei -B2 "id: $t" recipes_list | head -n 1 
+						done
+			else
+			printf "No recipes in your catalog currently have this ingredient.\n"
+		 	fi
+		else
                     read -p "Ingredient not found. Add to shopping list? y/n " op
                                         if [ "$op" == "y" ]; then
                                                 if grep -Eiq "$i" shopping_list; then
@@ -181,7 +189,16 @@ printf "\n*** Search and Edit Shopping List ***\n"
                 # search by ingredient name
                 elif grep -Eiq "$i" shopping_list; then
                         printf "You have this in your shopping list.\n"
-                # no title found
+                if grep -Eilq "$i" recipes/*; then
+                printf "You can make the following recipes with this ingredient:\n"
+                                                IFS=$'\n' titles=$(grep -Eil "$i" recipes/* | sed -r "s/recipes\/([0-9]+)/\1/")
+                                                for t in $titles; do
+                                                        grep -Ei -B2 "id: $t" recipes_list | head -n 1
+                                                done
+                        else
+                        printf "No recipes in your catalog currently have this ingredient.\n"
+		fi
+# no title found
                 else
                     read -p "Ingredient not found. Add to shopping list? y/n " op
                                         if [ "$op" == "y" ]; then
