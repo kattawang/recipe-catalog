@@ -15,7 +15,7 @@ function search(){
                         cat recipes_list | grep -v "tag" | grep -v "id" | sort -f
 			read -p "Would you like to open a recipe? If so, enter name of recipe. Otherwise, hit <Enter>. " r
                         if [ ! -z "$r" ]; then
-                                if grep -Eiq "$r" recipes_list; then
+                                if grep -Eiq "^$r$" recipes_list; then
 
                                         id=$(grep -i -A2 "$r" recipes_list | sed '1,2d' | sed -r 's/^id: ([0-9]+)$/\1/')
                                         more recipes/$id
@@ -37,7 +37,7 @@ function search(){
 			rm -f temp2
 			read -p "Would you like to open a recipe? If so, enter name of recipe. Otherwise, hit <Enter>. " r
                         if [ ! -z "$r" ]; then
-                                if grep -Eiq "$r" recipes_list; then
+                                if grep -Eiq "^$r$" recipes_list; then
 
                                         id=$(grep -i -A2 "$r" recipes_list | sed '1,2d' | sed -r 's/^id: ([0-9]+)$/\1/')
                                         more recipes/$id
@@ -49,7 +49,7 @@ function search(){
                 elif grep -i "$recipe" recipes_list | grep -v "tag"; then
                         read -p "Would you like to open a recipe? If so, enter name of recipe. Otherwise, hit <Enter>. " r
                         if [ ! -z "$r" ]; then
-				if grep -Eiq "$r" recipes_list; then
+				if grep -Eiq "^$r$" recipes_list; then
 
                                 	id=$(grep -i -A2 "$r" recipes_list | sed '1,2d' | sed -r 's/^id: ([0-9]+)$/\1/')
                                 	more recipes/$id
@@ -77,6 +77,8 @@ function add(){
 				echo "Makes: $servings" >> "recipes/$id"
 				echo "" >> "recipes/$id"
                 read -p "Tags: " tags
+		echo "" >> "recipes/$id"
+		echo "Ingredients:" >> "recipes/$id"
                 read -p "Enter ingredients, separated by return. Hit <Enter> when done: " ingredients
 				while [ ! -z "$ingredients" ]; do
 					echo "$ingredients" >> "recipes/$id"
@@ -114,12 +116,14 @@ function share(){
 }
 function search_inv(){
 	printf "\n*** Search and Edit Inventory ***\n"
+	printf "Enter the name of an ingredient to search for it.\n"
 	printf "To view inventory, enter \"view\".\n"
 	printf "To add items to inventory, enter \"add\".\n"
 	printf "To delete items from inventory, enter \"del\".\n"
     printf "Hit <Enter> to return to the main menu.\n\n"
-        read -p "What ingredient would you like to search for? " i
-        while [ ! -z "$i" ]; do
+            read -p "What would you like to search? " i
+    
+    while [ ! -z "$i" ]; do
 		if [ "$i" == "view" ]; then
                         cat inventory
                 # add ingredients to inventory
@@ -158,17 +162,20 @@ function search_inv(){
                                                 fi
 			fi
 		fi
-                read -p "What ingredient would you like to search for? " i
+	        read -p "What would you like to search? " i
 	done
 }
 function shopping_list(){
 printf "\n*** Search and Edit Shopping List ***\n"
-        printf "To view shopping list, enter \"view\".\n"
+        		printf "Enter the name of an ingredient to search for it.\n"
+	printf "To view shopping list, enter \"view\".\n"
         printf "To add items to shopping list, enter \"add\".\n"
         printf "To delete items from shopping list, enter \"del\".\n"
+	printf "To send shopping list to email, enter \"send\".\n"
     printf "Hit <Enter> to return to the main menu.\n\n"
-        read -p "What ingredient would you like to search for? " i
-        while [ ! -z "$i" ]; do
+            read -p "What would you like to search? " i
+    
+    while [ ! -z "$i" ]; do
                 # view all
                 if [ "$i" == "view" ]; then
                         cat shopping_list
@@ -186,6 +193,24 @@ printf "\n*** Search and Edit Shopping List ***\n"
                                 sed -i "/$ingredients/d" shopping_list
                                 read ingredients
                         done
+		# send shopping list
+		elif [ "$i" == "send" ]; then
+					    read -p "Would you like to send now or later? now/later " op
+						 if [ "$op" == "now" ]; then
+                                read -p "Enter recipient's email address: " email
+                        		cat shopping_list | mail -s "Shopping List" "$email"
+
+								printf "Shopping list sent.\n"
+						elif [ "$op" == "later" ]; then
+							read -p "How long from now would you like to receive your shopping list notification? State in hours: " h
+							# NOTE THAT THIS IS IN SECONDS FOR DEMO PURPOSES. FOR ACTUAL, USE $((h*3600))
+							seconds=$h
+							read -p "Enter recipient's email address: " email
+							sleep $h && cat shopping_list | mail -s "Shopping List" "$email" &
+							printf "Sending shopping list in $h hours.\n"
+						else
+							printf "Invalid option.\n"
+						fi
                 # search by ingredient name
                 elif grep -Eiq "$i" shopping_list; then
                         printf "You have this in your shopping list.\n"
@@ -206,8 +231,8 @@ printf "\n*** Search and Edit Shopping List ***\n"
                                                         printf "Added to list.\n"
 												fi
                 fi
-                read -p "What ingredient would you like to search for? " i
-        done
+        read -p "What would you like to search? " i
+	done
 }
 function inventory(){
 	printf "\n*** Inventory ***\n"
